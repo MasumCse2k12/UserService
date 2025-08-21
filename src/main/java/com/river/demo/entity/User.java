@@ -13,7 +13,7 @@ import lombok.experimental.FieldDefaults;
 @Setter
 @Builder
 @Entity
-@Table(name = "user")
+@Table(name = "rm_user")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class User extends BaseEntity {
 

@@ -85,13 +85,13 @@ public class AuthenticationController {
 
         String storedOtp = redisTemplate.opsForValue().get(request.getEmail()) != null ?
                 redisTemplate.opsForValue().get(request.getEmail()).toString() : null;
-
+       String token = "";
        try {
            if(request.getOtp().equals(storedOtp)) {
                //check user exist
                UserDto user = userService.findUserByEmail(request.getEmail());
                //generate auth token
-               generateJwtToken(request.getEmail(), Constants.JWT_TOKEN_VALIDITY, jwtSecret);
+               token = generateJwtToken(request.getEmail(), Constants.JWT_TOKEN_VALIDITY, jwtSecret);
            } else {
                 //OTP expired or invalid
                ApiResponse response = ApiResponse.builder()
@@ -107,6 +107,7 @@ public class AuthenticationController {
         ApiResponse response = ApiResponse.builder()
                 .code(HttpStatus.OK.name())
                 .message("Validate OTP!")
+                .token(token)
                 .build();
         return ResponseEntity.ok(response);
     }

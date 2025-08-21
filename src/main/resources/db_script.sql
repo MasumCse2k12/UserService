@@ -2,20 +2,23 @@ CREATE USER guest WITH ENCRYPTED PASSWORD 'guest';
 
 CREATE DATABASE river_um_service OWNER guest;
 
-create table user
+create table rv_user
 (
     id           bigserial
         primary key,
     first_name varchar(30) not null,
     last_name varchar(30) not null,
     email varchar(50) not null,
+    phone_number varchar(20) not null,
     company varchar(100) not null,
     designation  varchar(50) not null,
     created_date       timestamp      not null,
-    last_modified_date timestamp,
+    last_modified_date timestamp
 );
 
-alter table user
+--alter table
+
+alter table rv_user
     owner to guest;
 
 -- auto-generated definition
@@ -25,10 +28,10 @@ create table user_friend
         primary key,
     sender       integer        not null
         constraint fk_sender_account_id
-            references user,
+            references rv_user,
     receiver         integer        not null
         constraint fk_receiver_account_id
-            references user,
+            references rv_user,
     status             varchar(10)    not null,
     created_date       timestamp      not null,
     last_modified_date timestamp
