@@ -66,9 +66,10 @@ public class UserService {
     public UserDto findUserByEmail(String email) {
         log.info("Finding User by email :: {}", email);
 
-        User user =  userRepository.findUserByEmail(email).orElseThrow(()-> new RuntimeException("No user found!"));
+        User user =  userRepository.findUserByEmail(email).orElse(null);
 
-        return UserDto.builder()
+        return user == null ? null :
+                UserDto.builder()
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
                 .email(user.getEmail())
@@ -86,6 +87,7 @@ public class UserService {
                 .company(request.getCompany())
                 .address(request.getAddress())
                 .designation(request.getDesignation())
+                .status(Constants.ACTIVE) // Default active
                 .build();
     }
 }

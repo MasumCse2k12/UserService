@@ -48,24 +48,26 @@ public class AuthenticationController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse> loginUser(@Valid @RequestBody LoginRequest request) {
         log.info("Getting login request from {}", request.getEmail());
+        String otp = "";
+        try {
+            otp = generateOtp();
+            log.info("Generated OTP :: {} ", otp);
+            // send OTP the  requested email asynchronus way
+            //store the otp into user email key
+            redisTemplate.opsForValue().set(request.getEmail(), otp, 120, TimeUnit.SECONDS);
 
-      try {
-          String otp = generateOtp();
-          // send OTP the  requested email asynchronus way
-          //store the otp into user email key
-          redisTemplate.opsForValue().set(request.getEmail(), otp, 120, TimeUnit.SECONDS);
-
-      } catch (Exception e) {
-          return ResponseEntity.ok(ApiResponse.builder()
-                  .code(HttpStatus.INTERNAL_SERVER_ERROR.name())
-                  .message("Internal Server error. Please try again later.")
-                  .build());
-      }
+        } catch (Exception e) {
+            return ResponseEntity.ok(ApiResponse.builder()
+                    .code(HttpStatus.INTERNAL_SERVER_ERROR.name())
+                    .message("Internal Server error. Please try again later.")
+                    .build());
+        }
 
 
         ApiResponse response = ApiResponse.builder()
                 .code(HttpStatus.OK.name())
                 .message("Sent OTP to your email address!")
+                .token(otp) // by pass otp
                 .build();
         return ResponseEntity.ok(response);
     }
@@ -75,34 +77,35 @@ public class AuthenticationController {
         String otp = request.getOtp();
         log.info("Getting OTP :: {}", otp);
 
-        if(!StringUtils.hasText(otp)) {
+        if (!StringUtils.hasText(otp)) {
             return ResponseEntity.ok(ApiResponse.builder()
-                            .code(HttpStatus.BAD_REQUEST.name())
-                            .message("OTP is required")
+                    .code(HttpStatus.BAD_REQUEST.name())
+                    .message("OTP is required")
                     .build());
         }
 
 
         String storedOtp = redisTemplate.opsForValue().get(request.getEmail()) != null ?
                 redisTemplate.opsForValue().get(request.getEmail()).toString() : null;
-       String token = "";
-       try {
-           if(request.getOtp().equals(storedOtp)) {
-               //check user exist
-               UserDto user = userService.findUserByEmail(request.getEmail());
-               //generate auth token
-               token = generateJwtToken(request.getEmail(), Constants.JWT_TOKEN_VALIDITY, jwtSecret);
-           } else {
+        String token = "";
+        try {
+            if (request.getOtp().equals(storedOtp)) {
+                //check user exist
+                UserDto user = userService.findUserByEmail(request.getEmail());
+                //generate auth token
+                token = user != null ? generateJwtToken(user, Constants.JWT_TOKEN_VALIDITY, jwtSecret) : "";
+            } else {
                 //OTP expired or invalid
-               ApiResponse response = ApiResponse.builder()
-                       .code(HttpStatus.BAD_REQUEST.name())
-                       .message("Invalid OTP!")
-                       .build();
-               return ResponseEntity.ok(response);
-           }
-       } catch (Exception ex) {
-
-       }
+                log.error("OTP is invalid");
+                ApiResponse response = ApiResponse.builder()
+                        .code(HttpStatus.BAD_REQUEST.name())
+                        .message("Invalid OTP!")
+                        .build();
+                return ResponseEntity.ok(response);
+            }
+        } catch (Exception ex) {
+            log.error(ex.getMessage());
+        }
 
         ApiResponse response = ApiResponse.builder()
                 .code(HttpStatus.OK.name())
@@ -112,13 +115,18 @@ public class AuthenticationController {
         return ResponseEntity.ok(response);
     }
 
-    private  String generateJwtToken(String subject, long validityInMinutes, String secret) {
+    private String generateJwtToken(UserDto user, long validityInMinutes, String secret) {
         // Generate a secure key for signing the JWT
         Key key = Keys.hmacShaKeyFor(secret.getBytes());
 
         // Set claims (payload)
         Map<String, Object> claims = new HashMap<>();
         claims.put("user_role", "user"); // Example custom claim
+        claims.put("first_name", user.getFirstName());
+        claims.put("last_name", user.getLastName());
+        claims.put("designation", user.getDesignation());
+        claims.put("company", user.getCompany());
+        claims.put("address", user.getAddress());
 
         // Set token expiration time
         long nowMillis = System.currentTimeMillis();
@@ -128,7 +136,7 @@ public class AuthenticationController {
         // Build and sign the JWT
         String jwt = Jwts.builder()
                 .setClaims(claims) // Custom claims
-                .setSubject(subject) // Subject of the token (e.g., username)
+                .setSubject(user.getEmail()) // Subject of the token (e.g., username)
                 .setIssuedAt(now) // When the token was issued
                 .setExpiration(expiration) // When the token expires
                 .signWith(key, SignatureAlgorithm.HS256) // Sign with the generated key and algorithm
@@ -139,6 +147,6 @@ public class AuthenticationController {
 
     private String generateOtp() {
         Random random = new Random();
-        return String.valueOf(random.nextInt(999999)); // 6 digits OTP
+        return String.valueOf(10000 + random.nextInt(900000)); // 6 digits OTP
     }
 }

@@ -11,7 +11,9 @@ create table rv_user
     email varchar(50) not null,
     phone_number varchar(20) not null,
     company varchar(100) not null,
+    address varchar(100) not null,
     designation  varchar(50) not null,
+    status  varchar(10) not null,
     created_date       timestamp      not null,
     last_modified_date timestamp
 );

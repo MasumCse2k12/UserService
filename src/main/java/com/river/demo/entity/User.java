@@ -3,17 +3,16 @@ package com.river.demo.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Getter
 @Setter
 @Builder
 @Entity
-@Table(name = "rm_user")
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "rv_user")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class User extends BaseEntity {
 
