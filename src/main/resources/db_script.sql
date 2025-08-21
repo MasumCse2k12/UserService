@@ -41,3 +41,29 @@ create table user_friend
 
 alter table user_friend
     owner to guest;
+
+
+-- Insert into rv_user (id is auto-generated)
+INSERT INTO rv_user (
+    first_name,
+    last_name,
+    email,
+    phone_number,
+    company,
+    address,
+    designation,
+    status,
+    created_date,
+    last_modified_date
+) VALUES (
+    'Masum',
+    'Billah',
+    'masumbillah2k12@gmail.com',
+    '01943177909',
+    'PSL',
+    'Dhaka, Bangladesh', -- example address
+    'SSE',
+    'ACTIVE',
+    NOW(),       -- created_date
+    NULL         -- last_modified_date
+);
